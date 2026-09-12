@@ -142,6 +142,8 @@ table.grid{border-collapse:separate; border-spacing:0; width:100%; min-width:max
   font:inherit; color:var(--ink); outline:none; border-radius:0;
 }
 .inp:focus{background:#fff; box-shadow:inset 0 0 0 2px var(--blue); border-radius:6px}
+.inp[readonly]{background:#e7eff8; color:var(--navy-800); font-weight:800; cursor:default}
+.inp[readonly]:focus{background:#e7eff8; box-shadow:none; border-radius:0}
 select.inp{cursor:pointer; text-overflow:ellipsis}
 select.inp option{background:#fff; color:var(--ink)}
 input[type=number].inp{text-align:center; padding:7px 3px}
@@ -585,7 +587,7 @@ table.kv{width:100%; max-width:980px; border-collapse:separate; border-spacing:0
             <table class="grid" id="tblD2"></table>
           </div>
           <div class="gridfoot">
-            <span>Estimated Volume fills automatically from Effective Area × Estimated Yield — you can still type over it manually.</span>
+            <span><b>Effective Area (ha)</b> = <b>Plant Count ÷ spacing population</b> (spacing from Transplanting: 1.1 × 0.5 = 18,000/ha, 1.0 × 0.5 = 20,000/ha). For the <b>2nd Volume</b>, <b>Estimated Yield (kg/ha)</b> = <b>(2nd Volume Total Score × 1st Volume Estimated Yield) ÷ 100</b> (the 1st Volume yield is entered manually). <b>Estimated Volume (kg)</b> = <b>Effective Area × Estimated Yield</b>. These columns calculate automatically and are locked from typing (PLOT 1 → 1st Volume, PLOT 2 → 2nd Volume).</span>
           </div>
         </section>
 
@@ -630,6 +632,7 @@ table.kv{width:100%; max-width:980px; border-collapse:separate; border-spacing:0
               <span><i style="background:#34a853"></i>Row with data</span>
               <span>Dropdowns support <b>＋ Add new…</b> options, saved in this browser</span>
               <span><b>ETL</b> = Economic Threshold Level · <b>CPA</b> = Crop Protection Agent · <b>PPE</b> = Personal Protective Equipment</span>
+              <span><b>Dosage</b> fills automatically from CPA Used and is fixed (cannot be edited).</span>
             </div>
             <span class="spacer"></span>
             <span>Tip: press <kbd>Ctrl</kbd> + <kbd>S</kbd> anywhere to save</span>
@@ -648,6 +651,7 @@ table.kv{width:100%; max-width:980px; border-collapse:separate; border-spacing:0
           <div class="gridfoot">
             <button id="btnAddRound" type="button" class="btn small navy">＋ Add Round</button>
             <span>Empty trailing rounds are not stored.</span>
+            <span><b>Dosage</b> is selected from the dropdown (15ml / 20ml).</span>
             <span class="spacer"></span>
             <span>Total labor per round = Family M/F + Fulltime M/F + Temporary M/F</span>
           </div>
@@ -2186,7 +2190,8 @@ window.__FARM_SHELL = {
   var LAB = [
     ['famM', 'Family M', 'Fam M'], ['famF', 'Family F', 'Fam F'],
     ['ftM', 'Fulltime M', 'FT M'], ['ftF', 'Fulltime F', 'FT F'],
-    ['tmpM', 'Temporary M', 'Tmp M'], ['tmpF', 'Temporary F', 'Tmp F']
+    ['tmpM', 'Temporary M', 'Tmp M'], ['tmpF', 'Temporary F', 'Tmp F'],
+    ['lab', 'Laborer', 'Laborer']
   ];
 
   // A — Seedbedding Setup (vertical key/value)
@@ -2251,7 +2256,7 @@ window.__FARM_SHELL = {
     grampack: ['0.25', '0.50'],
     dispo: ['Compost Pit', 'Burying'],
     unit: ['kg', 'bags'],
-    cpa: ['Elicor', 'Previter', 'Steward', 'Flupro'],
+    cpa: ['Elicor', 'Prevathon', 'Previcur-N', 'Previter', 'Steward'],
     dos: ['25 ML', '10 ML', '4 GRMS'],
     ppe: ['C', 'I']
   };
@@ -2368,7 +2373,7 @@ window.__FARM_SHELL = {
       var i1 = el('input', 'inp num ln'); i1.type = 'number'; i1.min = '0'; i1.step = 'any';
       i1.setAttribute('data-k', L[0] + '_n'); td1.appendChild(i1); tr.appendChild(td1);
       var td2 = el('td');
-      var i2 = el('input', 'inp num'); i2.type = 'number'; i2.min = '0'; i2.step = 'any';
+      var i2 = el('input', 'inp'); i2.type = 'text';
       i2.setAttribute('data-k', L[0] + '_a'); td2.appendChild(i2); tr.appendChild(td2);
     });
     tr.appendChild(el('td', 'total', ''));
@@ -2722,7 +2727,7 @@ window.__FARM_SHELL = {
         S.prefixes.forEach(function (p, i) {
           var o = arr[i] || {};
           S.fields.forEach(function (f) { row.push(o[f.k] !== undefined ? o[f.k] : ''); });
-          LAB.forEach(function (g) { row.push(num(o[g[0] + '_n']), num(o[g[0] + '_a'])); });
+          LAB.forEach(function (g) { row.push(num(o[g[0] + '_n']), o[g[0] + '_a'] != null ? o[g[0] + '_a'] : ''); });
           row.push(laborSum(o) || '');
         });
       });
@@ -2957,7 +2962,7 @@ window.__FARM_SHELL = {
   var LP_ROWS = [['Land Preparation', 1], ['Land Preparation', 2]];
   var LP_FIELDS = [
     { k: 'date',   label: 'Date',               xlabel: 'Date',   t: 'date', w: 122 },
-    { k: 'method', label: 'Method / Mechanized', xlabel: 'Method', t: 'sel', g: 'lpmethod', w: 126 },
+    { k: 'method', label: 'Land Preparation Method', xlabel: 'Method', t: 'sel', g: 'lpmethod', w: 126 },
     { k: 'model',  label: 'Model',              xlabel: 'Model',  t: 'text', w: 98 },
     { k: 'hp',     label: 'HP',                 xlabel: 'HP',     t: 'num',  w: 56 },
     { k: 'fuel',   label: 'Fuel L',             xlabel: 'Fuel L', t: 'num',  w: 62 },
@@ -2992,9 +2997,9 @@ window.__FARM_SHELL = {
   // D — Volume Estimation (1st / 2nd volume)
   var D1_FIELDS = [
     { k: 'plant',   label: 'Plant Count',            xlabel: 'Plant Count',            t: 'num', w: 86 },
-    { k: 'area',    label: 'Effective Area (ha)',    xlabel: 'Effective Area (ha)',    t: 'num', w: 96 },
+    { k: 'area',    label: 'Effective Area (ha)',    xlabel: 'Effective Area (ha)',    t: 'num', w: 96, auto: true, autoTip: 'Calculated automatically: Plant Count / spacing population (spacing selected in Transplanting; 1.1 x 0.5 = 18,000 plants/ha, 1.0 x 0.5 = 20,000 plants/ha)' },
     { k: 'yld',     label: 'Estimated Yield (kg/ha)', xlabel: 'Estimated Yield (kg/ha)', t: 'num', w: 118 },
-    { k: 'volume',  label: 'Estimated Volume (kg)',  xlabel: 'Estimated Volume (kg)',  t: 'num', w: 118, auto: true },
+    { k: 'volume',  label: 'Estimated Volume (kg)',  xlabel: 'Estimated Volume (kg)',  t: 'num', w: 118, auto: true, autoTip: 'Calculated automatically: Effective Area (ha) x Estimated Yield (kg/ha)' },
     { k: 'sRob',    label: 'Score Robustness',       xlabel: 'Score Robustness',       t: 'num', w: 74 },
     { k: 'sDis',    label: 'Score Disease/Insects',  xlabel: 'Score Disease/Insects',  t: 'num', w: 80 },
     { k: 'sCult',   label: 'Score Cultural Practices', xlabel: 'Score Cultural Practices', t: 'num', w: 86 },
@@ -3044,11 +3049,11 @@ window.__FARM_SHELL = {
   ];
 
   var DEFAULT_OPTS = {
-    lpmethod: ['Animal / Carabao', 'Hand Tractor', '4WD Tractor', 'Manual'],
-    fertdisp: ['Collect', 'Redeemed', 'Reuse', 'Recycle', 'Junk Shop / Waste Collection Facility'],
+    lpmethod: ['Animal', 'Mechanized'],
+    fertdisp: ['Collect', 'Redeemed'],
     tmethod: ['Furrow', 'Ridge'],
     spacing: ['1.1 x 0.5', '1.0 x 0.5'],
-    imethod: ['Hill to Hill - With Dike', 'Hill to Hill - W/O Dike', 'Alternate Furrow - With Dike', 'Alternate Furrow - W/O Dike', 'Full Furrow'],
+    imethod: ['Hill to Hill', 'Alternate Furrow - With Dike', 'Alternate Furrow - W/O Dike', 'Full Furrow - With Dike', 'Full Furrow - W/O Dike '],
     wsource: ['Underground - Shallow Tube Well', 'Underground - Deep Well', 'Surface - Spring', 'Surface - River and Lake', "Gov't Irrigation Canal", 'Others'],
     ppe: ['C', 'I']
   };
@@ -3143,6 +3148,15 @@ window.__FARM_SHELL = {
     ['Y', 'N'].forEach(function (v) { var o = el('option', null, v); o.value = v; s.appendChild(o); });
     return s;
   }
+  // Mark an input as a locked calculated field (read-only, tooltip)
+  function lockAutoInput(inp, tip) {
+    inp.classList.add('auto');
+    inp.setAttribute('data-auto', '1');
+    inp.setAttribute('readonly', 'readonly');
+    inp.setAttribute('aria-readonly', 'true');
+    inp.title = tip || 'Calculated automatically';
+    return inp;
+  }
   function makeFieldInput(f, keyOverride) {
     var key = keyOverride || f.k, inp;
     if (f.t === 'yn') inp = makeYN(key);
@@ -3155,7 +3169,7 @@ window.__FARM_SHELL = {
       if (f.ph) inp.placeholder = f.ph;
       inp.setAttribute('data-k', key);
     }
-    if (f.auto) { inp.classList.add('auto'); inp.setAttribute('data-auto', '1'); }
+    if (f.auto) lockAutoInput(inp, f.autoTip);
     return inp;
   }
   function buildFieldCell(f) {
@@ -3169,7 +3183,7 @@ window.__FARM_SHELL = {
       var i1 = el('input', 'inp num ln'); i1.type = 'number'; i1.min = '0'; i1.step = 'any';
       i1.setAttribute('data-k', L[0] + '_n'); td1.appendChild(i1); tr.appendChild(td1);
       var td2 = el('td');
-      var i2 = el('input', 'inp num'); i2.type = 'number'; i2.min = '0'; i2.step = 'any';
+      var i2 = el('input', 'inp'); i2.type = 'text';
       i2.setAttribute('data-k', L[0] + '_a'); td2.appendChild(i2); tr.appendChild(td2);
     });
     tr.appendChild(el('td', 'total', ''));
@@ -3253,6 +3267,11 @@ window.__FARM_SHELL = {
       D1_FIELDS.slice(0, 8).forEach(function (f) { tr.appendChild(buildFieldCell(f)); });
       tr.appendChild(el('td', 'total totalScore', ''));
       var td = el('td'); td.appendChild(makeFieldInput(D1_FIELDS[8])); tr.appendChild(td);
+      if (i === 1) {
+        // 2nd Volume Estimated Yield is locked: (2nd Volume Total Score x 1st Volume Yield) / 100
+        var y2 = tr.querySelector('[data-k="yld"]');
+        if (y2) lockAutoInput(y2, 'Calculated automatically: (2nd Volume Total Score x 1st Volume Estimated Yield kg/ha) / 100');
+      }
       body.appendChild(tr);
     });
     tbl.appendChild(body);
@@ -3362,15 +3381,54 @@ window.__FARM_SHELL = {
     });
     return any ? s : null;
   }
+  // Plant population per hectare for the spacing picked in Transplanting (metres, "row x plant"):
+  // 1.1 x 0.5 = 18,000 plants/ha ; 1.0 x 0.5 = 20,000 plants/ha.
+  // Any other "a x b" spacing is derived as 10,000 / (a*b), rounded to the nearest 1,000.
+  var SPACING_DENSITY = { '1.1 x 0.5': 18000, '1.0 x 0.5': 20000 };
+  function normSpacing(v) {
+    return String(v == null ? '' : v).trim().toLowerCase().replace(/×/g, 'x').replace(/\s+/g, ' ');
+  }
+  function spacingDensity(v) {
+    var key = normSpacing(v);
+    if (Object.prototype.hasOwnProperty.call(SPACING_DENSITY, key)) return SPACING_DENSITY[key];
+    var m = /([0-9]*\.?[0-9]+)\s*x\s*([0-9]*\.?[0-9]+)/.exec(key);
+    if (!m) return NaN;
+    var a = parseFloat(m[1]), b = parseFloat(m[2]);
+    if (!(a > 0) || !(b > 0)) return NaN;
+    return Math.round((10000 / (a * b)) / 1000) * 1000;
+  }
   function recalcVolRow(tr) {
     var ts = scoreSum(tr);
     var tsc = tr.querySelector('.totalScore');
     if (tsc) { tsc.textContent = ts === null ? '' : String(round2(ts)); tsc.classList.toggle('tot-hot', ts !== null && ts > 0); }
     if (tr.id === 'vol1' || tr.id === 'vol2') {
-      var area = parseFloat(tr.querySelector('[data-k="area"]').value);
-      var yld = parseFloat(tr.querySelector('[data-k="yld"]').value);
+      // Effective Area (ha) = Plant Count / plant population for this plot's Transplanting spacing (locked)
+      var plotIdx = tr.id === 'vol1' ? 0 : 1; // 1st Volume = PLOT 1, 2nd Volume = PLOT 2
+      var cbody = $('tblCBody');
+      var spRow = cbody && cbody.rows[plotIdx] ? cbody.rows[plotIdx] : null;
+      var spSel = spRow ? spRow.querySelector('[data-k="spacing"]') : null;
+      var plantInp = tr.querySelector('[data-k="plant"]');
+      var areaInp = tr.querySelector('[data-k="area"]');
+      var yldInp = tr.querySelector('[data-k="yld"]');
+      var plant = parseFloat(plantInp ? plantInp.value : '');
+      var dens = spacingDensity(spSel ? spSel.value : '');
+      if (areaInp) {
+        areaInp.value = (!isNaN(plant) && !isNaN(dens) && dens > 0) ? String(plant / dens) : '';
+      }
+      // 2nd Volume Estimated Yield (kg/ha) = (2nd Volume Total Score x 1st Volume Estimated Yield) / 100 (locked)
+      if (tr.id === 'vol2') {
+        var yld1Row = $('vol1');
+        var yld1Inp = yld1Row ? yld1Row.querySelector('[data-k="yld"]') : null;
+        var yld1 = yld1Inp ? parseFloat(yld1Inp.value) : NaN;
+        if (yldInp) {
+          yldInp.value = (ts !== null && !isNaN(yld1)) ? String(round2(ts * yld1 / 100)) : '';
+        }
+      }
+      // Estimated Volume (kg) = Effective Area (ha) x Estimated Yield (kg/ha) — locked formula
+      var area = parseFloat(areaInp ? areaInp.value : '');
+      var yld = parseFloat(yldInp ? yldInp.value : '');
       var vol = tr.querySelector('[data-k="volume"]');
-      if (!vol.dataset.dirty) {
+      if (vol) {
         vol.value = (!isNaN(area) && !isNaN(yld)) ? String(round2(area * yld)) : '';
       }
     }
@@ -3437,7 +3495,6 @@ window.__FARM_SHELL = {
     });
     [['vol1', D1_KEYS], ['vol2', D1_KEYS], ['vol3', D2_KEYS]].forEach(function (p) {
       var tr = $(p[0]); setRowValues(tr, {}, p[1]);
-      tr.querySelectorAll('[data-auto]').forEach(function (i) { delete i.dataset.dirty; });
       recalcVolRow(tr);
     });
     $('bagBody').querySelector('[data-k="v"]').value = '';
@@ -3464,9 +3521,7 @@ window.__FARM_SHELL = {
     [['vol1', rec.volume && rec.volume.v1, D1_KEYS], ['vol2', rec.volume && rec.volume.v2, D1_KEYS], ['vol3', rec.volume && rec.volume.v3, D2_KEYS]].forEach(function (p) {
       var tr = $(p[0]);
       setRowValues(tr, p[1] || {}, p[2]);
-      var auto = tr.querySelector('[data-k="volume"]');
-      if (auto && String(auto.value).trim() !== '') auto.dataset.dirty = '1'; // preserve stored manual/legacy value
-      recalcVolRow(tr);
+      recalcVolRow(tr); // Estimated Volume is recomputed from Effective Area x Estimated Yield
     });
   }
   function fillForm(rec) {
@@ -3591,7 +3646,7 @@ window.__FARM_SHELL = {
     return L;
   }
   function pushLaborRow(row, o) {
-    LAB.forEach(function (g) { row.push(num(o[g[0] + '_n']), num(o[g[0] + '_a'])); });
+    LAB.forEach(function (g) { row.push(num(o[g[0] + '_n']), o[g[0] + '_a'] != null ? o[g[0] + '_a'] : ''); });
     row.push(laborSum(o) || '');
   }
   function rowFromFields(row, o, fields) {
@@ -3786,18 +3841,23 @@ window.__FARM_SHELL = {
       var t = e.target, tr = t && t.closest ? t.closest('tr') : null;
       if (!tr) return;
       if (tr.closest('#tblA,#tblB,#tblC,#tableE,#tblF')) refreshTotals(tr);
-      if (tr.closest('#tblD1,#tblD2')) {
-        if (t.matches('[data-k="volume"]')) t.dataset.dirty = '1';
-        if (t.matches('[data-k="area"],[data-k="yld"]')) {
-          var vol = tr.querySelector('[data-k="volume"]');
-          if (vol) delete vol.dataset.dirty;
-        }
+      if (tr.closest('#tblD1')) {
+        // Rows are chained (2nd-yield uses 1st-yield): recalc 1st then 2nd Volume
+        recalcVolRow($('vol1'));
+        recalcVolRow($('vol2'));
+      } else if (tr.closest('#tblD2')) {
         recalcVolRow(tr);
       }
     });
     document.addEventListener('change', function (e) {
       var tr = e.target && e.target.closest ? e.target.closest('tr') : null;
       if (tr && tr.closest('#tblA,#tblB,#tblC,#tableE,#tblF')) refreshTotals(tr);
+      if (tr && tr.closest('#tblC') && e.target.matches && e.target.matches('[data-k="spacing"]')) {
+        // Spacing drives Effective Area: PLOT 1 -> 1st Volume, PLOT 2 -> 2nd Volume
+        var cb = $('tblCBody');
+        var idx = cb ? Array.prototype.indexOf.call(cb.rows, tr) : -1;
+        if (idx === 0 || idx === 1) { recalcVolRow($('vol1')); recalcVolRow($('vol2')); }
+      }
     });
   }
   function initStandalone() {
@@ -3890,7 +3950,7 @@ window.__FARM_SHELL = {
     { k: 'etl',      label: 'ETL Reached',          xlabel: 'ETL Reached',    t: 'yn',   w: 58 },
     { k: 'picking',  label: 'Manual Picking',       xlabel: 'Manual Picking', t: 'yn',   w: 62 },
     { k: 'cpa',      label: 'CPA Used',             xlabel: 'CPA Used',       t: 'sel',  g: 'cpa', w: 110 },
-    { k: 'dosage',   label: 'Dosage',               xlabel: 'Dosage',         t: 'text', w: 80 },
+    { k: 'dosage',   label: 'Dosage',               xlabel: 'Dosage',         t: 'text', w: 80, locked: true, lockTip: 'Auto-filled from CPA Used (Elicor/Prevathon 25 ml, Previcur-N/Previter 65 ml, Steward 4 gms) - fixed, cannot be edited' },
     { k: 'ppe',      label: 'PPE',                  xlabel: 'PPE',            t: 'sel',  g: 'ppe', w: 64 },
     { k: 'sign',     label: 'Warning Sign Installed', xlabel: 'Warning Sign', t: 'yn',   w: 96 }
   ];
@@ -3899,7 +3959,7 @@ window.__FARM_SHELL = {
     { k: 'chem',   label: 'Chemical Y/N', xlabel: 'Chemical Y/N', t: 'yn',   w: 64 },
     { k: 'manual', label: 'Manual Y/N',   xlabel: 'Manual Y/N',   t: 'yn',   w: 64 },
     { k: 'cpa',    label: 'CPA Used',     xlabel: 'CPA Used',     t: 'sel', g: 'cpa', w: 110 },
-    { k: 'dosage', label: 'Dosage',       xlabel: 'Dosage',       t: 'text', w: 80 },
+    { k: 'dosage', label: 'Dosage',       xlabel: 'Dosage',       t: 'sel', g: 'suckerdose', w: 80 },
     { k: 'ppe',    label: 'PPE',          xlabel: 'PPE',          t: 'sel', g: 'ppe', w: 64 }
   ];
 
@@ -3917,8 +3977,9 @@ window.__FARM_SHELL = {
 
   var DEFAULT_OPTS = {
     stage: ['Seedling', 'Transplanted', 'Vegetative', 'Before Topping', 'After Topping', 'Harvesting'],
-    insect: ['Tobacco Caterpillar', 'Cutworm', 'Aphids', 'Budworm', 'Stem Borer'],
-    cpa: ['Elicor', 'Previter', 'Steward', 'Flupro'],
+    insect: ['Cutworm (CT)', 'Aphids (A)', 'Budworm (BD)', 'Hornworm', 'Katydid (KT)', 'Cabbage Loopers', 'Armyworm (AW)'],
+    cpa: ['Elicor', 'Prevathon', 'Previcur-N', 'Previter', 'Steward'],
+    suckerdose: ['15ml', '20ml'],
     ppe: ['C', 'I']
   };
 
@@ -3998,7 +4059,7 @@ window.__FARM_SHELL = {
     var s = e.target;
     if (s.value !== '__add') return;
     var g = s.getAttribute('data-group');
-    var label = { stage: 'plant stage', insect: 'insect', cpa: 'CPA', ppe: 'PPE' }[g] || g;
+    var label = { stage: 'plant stage', insect: 'insect', cpa: 'CPA', suckerdose: 'dosage', ppe: 'PPE' }[g] || g;
     var v = prompt('Add new ' + label + ' option:');
     if (v && v.trim()) {
       v = v.trim();
@@ -4041,10 +4102,43 @@ window.__FARM_SHELL = {
     return s;
   }
 
+  /* Standard CPA dosage reference -> auto-fills the Dosage column when a CPA is selected.
+     Keys are normalised (lower-case, spaces/hyphens stripped) so 'Previcur-N' and 'Previcur N' both match. */
+  var CPA_DOSAGE = {
+    elicor: '25 ml',
+    prevathon: '25 ml',
+    previcurn: '65 ml',
+    previter: '65 ml',
+    steward: '4 gms'
+  };
+  function normCpaName(v) {
+    return String(v == null ? '' : v).toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  function standardDosage(cpaName) {
+    var key = normCpaName(cpaName);
+    return Object.prototype.hasOwnProperty.call(CPA_DOSAGE, key) ? CPA_DOSAGE[key] : null;
+  }
+  function applyCpaDosage(tr, onlyIfBlank) {
+    if (!tr) return;
+    var cpaSel = tr.querySelector('[data-k="cpa"]');
+    var doseInp = tr.querySelector('[data-k="dosage"]');
+    if (!cpaSel || !doseInp) return;
+    var name = String(cpaSel.value || '').trim();
+    if (name === '' || name === '__add') {
+      if (!onlyIfBlank) doseInp.value = '';
+      return;
+    }
+    var d = standardDosage(name);
+    if (d === null) return; // custom/unknown CPA with no standard dose: leave dosage for manual entry
+    if (onlyIfBlank && String(doseInp.value).trim() !== '') return;
+    doseInp.value = d;
+  }
+
   function makeInput(f, key) {
     var i = el('input', 'inp');
     i.type = f.t === 'date' ? 'date' : 'text';
     if (f.ph) i.placeholder = f.ph;
+    if (f.title) i.title = f.title;
     i.setAttribute('data-k', key);
     return i;
   }
@@ -4062,14 +4156,29 @@ window.__FARM_SHELL = {
     if (f.t === 'yn') inp = makeYN(f.k);
     else if (f.t === 'sel') inp = makeSelect(f.g, f.k);
     else inp = makeInput(f, f.k);
+    if (f.locked) {
+      // Fixed calculated/auto-filled field (e.g. weekly dosage): read-only, filled from another column
+      inp.classList.add('auto');
+      inp.setAttribute('data-auto', '1');
+      inp.setAttribute('readonly', 'readonly');
+      inp.setAttribute('aria-readonly', 'true');
+      inp.title = f.lockTip || 'Filled automatically';
+    }
     td.appendChild(inp);
     return td;
+  }
+
+  function makeAge(key) {
+    var i = el('input', 'inp');
+    i.type = 'text';
+    i.setAttribute('data-k', key);
+    return i;
   }
 
   function buildLaborCells(tr) {
     LAB.forEach(function (L) {
       var td1 = el('td'); td1.appendChild(makeNum(L[0] + '_n', true)); tr.appendChild(td1);
-      var td2 = el('td'); td2.appendChild(makeNum(L[0] + '_a', false)); tr.appendChild(td2);
+      var td2 = el('td'); td2.appendChild(makeAge(L[0] + '_a')); tr.appendChild(td2);
     });
     var tot = el('td', 'total', '0');
     tr.appendChild(tot);
@@ -4321,12 +4430,14 @@ window.__FARM_SHELL = {
   function fillPane(rec) {
     var wRows = $('weeksBody').rows;
     (rec.weeks || []).forEach(function (w, i) {
-      if (wRows[i]) { setRowValues(wRows[i], w, WK); refreshTotals(wRows[i]); }
+      if (wRows[i]) { setRowValues(wRows[i], w, WK); applyCpaDosage(wRows[i], false); refreshTotals(wRows[i]); }
     });
     var body = $('roundsBody');
     body.innerHTML = '';
     var need = Math.max(2, (rec.rounds || []).length);
-    for (var i = 0; i < need; i++) addRound((rec.rounds || [])[i] || null);
+    for (var i = 0; i < need; i++) {
+      addRound((rec.rounds || [])[i] || null);
+    }
     fillDisposal('dispCpa', DISP_CPA.length, rec.disposal && rec.disposal.cpa);
     fillDisposal('dispFert', DISP_FERT.length, rec.disposal && rec.disposal.fert);
   }
@@ -4511,13 +4622,13 @@ window.__FARM_SHELL = {
       for (var w = 0; w < WEEKS; w++) {
         var wo = (rec.weeks || [])[w] || {};
         WEEK_FIELDS.forEach(function (f) { row.push(wo[f.k] !== undefined ? wo[f.k] : ''); });
-        LAB.forEach(function (g) { row.push(num(wo[g[0] + '_n']), num(wo[g[0] + '_a'])); });
+        LAB.forEach(function (g) { row.push(num(wo[g[0] + '_n']), wo[g[0] + '_a'] != null ? wo[g[0] + '_a'] : ''); });
         row.push(laborSum(wo) || '');
       }
       for (var r = 0; r < maxR; r++) {
         var ro = (rec.rounds || [])[r] || {};
         ROUND_FIELDS.forEach(function (f) { row.push(ro[f.k] !== undefined ? ro[f.k] : ''); });
-        LAB.forEach(function (g) { row.push(num(ro[g[0] + '_n']), num(ro[g[0] + '_a'])); });
+        LAB.forEach(function (g) { row.push(num(ro[g[0] + '_n']), ro[g[0] + '_a'] != null ? ro[g[0] + '_a'] : ''); });
         row.push(r < (rec.rounds || []).length ? (laborSum(ro) || '') : '');
       }
       var cpa = (rec.disposal && rec.disposal.cpa) || [];
@@ -4733,6 +4844,10 @@ window.__FARM_SHELL = {
     document.addEventListener('change', function (e) {
       var tr = e.target && e.target.closest ? e.target.closest('tr') : null;
       if (tr && (tr.closest('#tblWk') || tr.closest('#tblRd'))) refreshTotals(tr);
+      if (tr && e.target.matches && e.target.matches('select[data-k="cpa"]') && tr.closest('#tblWk')) {
+        // Section A only: auto-populate the fixed standard dosage for the selected CPA
+        applyCpaDosage(tr, false);
+      }
     });
   }
   function initStandalone() {
@@ -4894,5 +5009,5 @@ window.__FARM_SHELL = {
 })();
 </script>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a39cab423cbf5f26',t:'MTc4OTE5MjU4Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a39f30ade959bb8e',t:'MTc4OTIxOTAyMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
